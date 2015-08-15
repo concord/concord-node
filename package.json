@@ -1,0 +1,25 @@
+{
+  "name": "concord",
+  "version": "0.0.0",
+  "description": "node driver for describing computations that communicate with the concord framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/concord/concord-node.git"
+  },
+  "keywords": [
+    "concord",
+    "computation",
+    "stream",
+    "processing"
+  ],
+  "author": "Concord",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/concord/concord-node/issues"
+  },
+  "homepage": "https://github.com/concord/concord-node#readme"
+}
