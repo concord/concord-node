@@ -35,16 +35,15 @@ function Computation(options) {
   this.name = options.name || 'node-' + process.hrtime().join('-');
 
   //
-  // Computation init function and process functions which are required
+  // Computation init function and process functions which are required.
+  // If these arent defined, errors will be thrown if they attempt to be used
+  // when starting the computation
   //
-  this._init = typeof options.init === 'function' ? options.init : undefined;
-  this._processRecord = typeof options.processRecord === 'function'
-    ? options.processRecord
-    : undefined;
+  if (typeof options.init === 'function') this._init = options.init;
+  if (typeof options.processRecord === 'function')
+    this._processRecord = options.processRecord;
 
-  this.processTimer = typeof options.processTimer === 'function'
-    ? options.processTimer
-    : undefined;
+  if (typeof options.processTimer === 'function') this.processTimer = options.processTimer;
 
   //
   // TODO: Validate these arrays for the case that they are objects as they
@@ -295,7 +294,7 @@ exports.run = function run(computation) {
   // So we can apply an array as the arguments, we use .apply
   //
   computation.connect.apply(computation, proxyParams);
-  computation.once('connect', finish);
+  computation.once('register', finish);
   server.once('connect', finish);
 
   server.listen(port);
