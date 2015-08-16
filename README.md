@@ -63,7 +63,7 @@ var computation = new concord.Computation({
 // Network errors for the thrift connection are handled here
 //
 computation.on('error', function (err) {
-  console.erro(err);
+  console.error(err);
 });
 
 computation.on('register', function (meta) {
