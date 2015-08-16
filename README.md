@@ -60,13 +60,39 @@ var computation = new concord.Computation({
 });
 
 //
-// Abstract the server so we keep the connection handling in one spot
-// Optionally pass in parameters, it will automatically detect them from the
-// environment
+// Network errors for the thrift connection are handled here
 //
-var server = new concord.Server();
-server.run(computation);
+computation.on('error', function (err) {
+  console.erro(err);
+});
 
+computation.on('register', function (meta) {
+  console.log('We have registered with proxy with %j', meta);
+});
+
+//
+// This is how we know we are connected to the proxy
+//
+computation.on('connect', function () {
+  console.log('connected to proxy!');
+});
+
+//
+// Run the computation! Returns the computation server
+//
+var server = concord.run(computation);
+
+server.on('error', function (err) {
+  console.error('thrift processing server errored');
+});
+
+//
+// This means we have connected to both proxy and are listening on a port to
+// receive computations
+//
+server.on('start', function () {
+  console.log('We have begun!')
+});
 
 
 ```
