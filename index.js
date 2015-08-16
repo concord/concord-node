@@ -1,11 +1,13 @@
 'use strict';
 
+var EE = require('events').EventEmitter;
+var util = require('util');
 var thrift = require('thrift');
-var through = require('through2');
+var FramedTransport = require('thrift').TFramedTransport;
+var BinaryProtocol = require('thrift').TBinaryProtocol;
 var Types = require('./src/bolt_types');
-var BoltManagerService = require('./src/BoltManagerService');
 var BoltProxyService = require('./src/BoltProxyService');
-var BoltSchedulerService = require('./src/BoltSchedulerService');
+var ComputationService = require('./src/ComputationService');
 
 var ComputationMetadata = Types.ComputationMetadata;
 var StreamMetadata = Types.StreamMetadata;
@@ -16,20 +18,21 @@ var Tx = Types.ComputationTx;
 var Record = Types.Record;
 var Endpoint = Types.Endpoint;
 
+//TODO: Refactor into separate files
+exports.Computation = Computation;
+
+//
+// Inherit from an event emitter
+//
+util.inherits(Computation, EE);
 
 function Computation(options) {
+  EE.call(this);
   //
   // Remark: Do we want to fail if we dont get a name? For now lets generate
   // a unique identifier
   //
   this.name = options.name || 'node-' + process.hrtime().join('-');
-  //
-  // Set the grouping to the correct INT code based on what we have in the
-  // thrift types. We default to SHUFFLE
-  //
-  this.grouping = groupMap(options.grouping || 'shuffle');
-
-  if (!this.grouping) throw new Error('Invalid grouping ' + options.grouping);
 
   //
   // Computation init function and process functions which are required
@@ -42,10 +45,6 @@ function Computation(options) {
   this.processTimer = typeof options.processTimer === 'function'
     ? options.processTimer
     : undefined;
-
-  if (!this._init || !this._processRecord) {
-    throw new Error('You must implement the init and processRecord functions and pass them in');
-  }
 
   //
   // TODO: Validate these arrays for the case that they are objects as they
@@ -99,7 +98,7 @@ Computation.prototype.boltProcessRecord = function (record, callback) {
   //
   this._processRecord.call(ctx, record, function (err) {
     if (err) {
-      retur callback(err);
+      return callback(err);
     }
 
     //
@@ -156,12 +155,62 @@ Computation.prototype.deriveMeta = function () {
 //
 Computation.prototype._mapMetadata = function (s) {
   return typeof s === 'string'
-    ? new StreamMetadata({ name: s, grouping: this.grouping })
-    : new StreamMetadata({ name: s.name, grouping: groupMap(s.grouping) || this.grouping });
+    ? new StreamMetadata({ name: s, grouping: 'SHUFFLE' })
+    : new StreamMetadata({ name: s.name, grouping: groupMap(s.grouping) || 'SHUFFLE' });
 };
 
-Computation.prototype.createProxy = function () {
+//
+// Connect to the client proxy
+//
+Computation.prototype.connect = function (host, port, callback) {
+  var self = this;
+  //
+  // Set the values and initialize the proxy
+  //
+  this.host = host;
+  this.port = port;
+  this.proxy = this.createProxy(host, port);
 
+  this.metadata.proxyEndpoint = new Endpoint({ ip: host, port: port });
+
+  //
+  // Alias functions over so they are properly called by the thrift machinery
+  //
+  this.getState = this.proxy.getState;
+  this.setState = this.proxy.setState;
+
+  //
+  // Check if there is a result we care about
+  //
+  this.proxy.registerWithScheduler(this.metadata, function (err) {
+    if (err) {
+      return callback
+        ? callback(err)
+        : self.emit('error', err);
+    }
+
+    self.emit('register', self.metadata);
+
+    if (callback) callback();
+  });
+
+};
+
+//
+// Create a bolt service proxy through instantiating a proper thrift connection
+//
+Computation.prototype.createProxy = function (host, port) {
+  this.connection = thrift.createConnection(host, port, {
+    transport: FramedTransport(),
+    protocol: BinaryProtocol()
+  });
+
+  this.connection.on('error', this.emit.bind(this, 'error'));
+  this.connection.on('connect', this.emit.bind(this, 'connection'));
+  //
+  // Return a BoltProxyService
+  //
+  return thrift.createClient(BoltProxyService, this.connection);
 };
 
 //
@@ -210,4 +259,46 @@ function snakeCase(text) {
   return text.replace(/[a-z][A-Z]/g, function (ch) {
     return ch[0] + '_' + ch[1].toLowerCase();
   });
+};
+
+//
+// Parse environment variables and create a thrift service based on the
+// computation
+//
+exports.run = function run(computation) {
+  var server = thift.createServer(ComputationService, computation);
+
+  //
+  // Send a start event when we are fully connected to everything
+  //
+  var finish = after(2, function () {
+    server.emit('start');
+  });
+
+  //
+  // Port to listen on
+  //
+  var port = process.env[Types.kConcordEnvKeyClientListenAddr].split(':')[1];
+  //
+  // Grab address to start proxy connection
+  //
+  var proxyParams = process.env[Types.kConcordEnvKeyClientProxyAddr].split(':');
+
+  //
+  // Error if we do not have environment variables set
+  //
+  if (!port || !proxyParams.length) {
+    setImmediate(server.emit.bind(emitter), 'error', new Error('Environment variables not found'));
+    return server;
+  }
+  //
+  // So we can apply an array as the arguments, we use .apply
+  //
+  computation.connect.apply(computation, proxyParams);
+  computation.once('connect', finish);
+  server.once('connect', finish);
+
+  server.listen(port);
+
+  return server;
 };
