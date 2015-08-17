@@ -28,12 +28,12 @@ util.inherits(Computation, EE);
 
 function Computation(options) {
   EE.call(this);
-  //
-  // Remark: Do we want to fail if we dont get a name? For now lets generate
-  // a unique identifier
-  //
-  this.name = options.name || 'node-' + process.hrtime().join('-');
 
+  //
+  // Validate that a name is given
+  //
+  this.name = options.name;
+  if (!this.name) throw new Error('Name of computation must be specified');
   //
   // Computation init function and process functions which are required.
   // If these arent defined, errors will be thrown if they attempt to be used
