@@ -1,0 +1,14 @@
+{
+  "name": "concord-demo",
+  "version": "1.0.0",
+  "description": "a demo for concord's node bindings",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests\"; exit 1"
+  },
+  "dependencies": {
+    "concord": "0.1.0"
+  },
+  "author": "Cole Brown",
+  "license": "ISC"
+}
