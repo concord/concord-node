@@ -342,8 +342,7 @@ ComputationMetadata.prototype.read = function(input) {
         for (var _i12 = 0; _i12 < _size7; ++_i12)
         {
           var elem13 = null;
-          elem13 = new ttypes.StreamMetadata();
-          elem13.read(input);
+          elem13 = input.readString();
           this.ostreams.push(elem13);
         }
         input.readListEnd();
@@ -396,13 +395,13 @@ ComputationMetadata.prototype.write = function(output) {
   }
   if (this.ostreams !== null && this.ostreams !== undefined) {
     output.writeFieldBegin('ostreams', Thrift.Type.LIST, 4);
-    output.writeListBegin(Thrift.Type.STRUCT, this.ostreams.length);
+    output.writeListBegin(Thrift.Type.STRING, this.ostreams.length);
     for (var iter15 in this.ostreams)
     {
       if (this.ostreams.hasOwnProperty(iter15))
       {
         iter15 = this.ostreams[iter15];
-        iter15.write(output);
+        output.writeString(iter15);
       }
     }
     output.writeListEnd();
@@ -708,7 +707,7 @@ ExecutorTaskInfoHelper.prototype.write = function(output) {
   return;
 };
 
-PhysicalComputationMetdata = module.exports.PhysicalComputationMetdata = function(args) {
+PhysicalComputationMetadata = module.exports.PhysicalComputationMetadata = function(args) {
   this.taskId = null;
   this.slaveId = null;
   this.cpus = null;
@@ -740,8 +739,8 @@ PhysicalComputationMetdata = module.exports.PhysicalComputationMetdata = functio
     }
   }
 };
-PhysicalComputationMetdata.prototype = {};
-PhysicalComputationMetdata.prototype.read = function(input) {
+PhysicalComputationMetadata.prototype = {};
+PhysicalComputationMetadata.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -813,8 +812,8 @@ PhysicalComputationMetdata.prototype.read = function(input) {
   return;
 };
 
-PhysicalComputationMetdata.prototype.write = function(output) {
-  output.writeStructBegin('PhysicalComputationMetdata');
+PhysicalComputationMetadata.prototype.write = function(output) {
+  output.writeStructBegin('PhysicalComputationMetadata');
   if (this.taskId !== null && this.taskId !== undefined) {
     output.writeFieldBegin('taskId', Thrift.Type.STRING, 1);
     output.writeString(this.taskId);
@@ -929,8 +928,7 @@ PhysicalComputationLayout.prototype.read = function(input) {
         for (var _i44 = 0; _i44 < _size39; ++_i44)
         {
           var elem45 = null;
-          elem45 = new ttypes.StreamMetadata();
-          elem45.read(input);
+          elem45 = input.readString();
           this.ostreams.push(elem45);
         }
         input.readListEnd();
@@ -950,7 +948,7 @@ PhysicalComputationLayout.prototype.read = function(input) {
         for (var _i51 = 0; _i51 < _size46; ++_i51)
         {
           var elem52 = null;
-          elem52 = new ttypes.PhysicalComputationMetdata();
+          elem52 = new ttypes.PhysicalComputationMetadata();
           elem52.read(input);
           this.nodes.push(elem52);
         }
@@ -991,13 +989,13 @@ PhysicalComputationLayout.prototype.write = function(output) {
   }
   if (this.ostreams !== null && this.ostreams !== undefined) {
     output.writeFieldBegin('ostreams', Thrift.Type.LIST, 3);
-    output.writeListBegin(Thrift.Type.STRUCT, this.ostreams.length);
+    output.writeListBegin(Thrift.Type.STRING, this.ostreams.length);
     for (var iter54 in this.ostreams)
     {
       if (this.ostreams.hasOwnProperty(iter54))
       {
         iter54 = this.ostreams[iter54];
-        iter54.write(output);
+        output.writeString(iter54);
       }
     }
     output.writeListEnd();
@@ -1091,17 +1089,17 @@ SchedulerMetadata.prototype.write = function(output) {
 
 TopologyMetadata = module.exports.TopologyMetadata = function(args) {
   this.version = 0;
-  this.hash = null;
   this.computations = null;
+  this.frameworkID = null;
   if (args) {
     if (args.version !== undefined) {
       this.version = args.version;
     }
-    if (args.hash !== undefined) {
-      this.hash = args.hash;
-    }
     if (args.computations !== undefined) {
       this.computations = args.computations;
+    }
+    if (args.frameworkID !== undefined) {
+      this.frameworkID = args.frameworkID;
     }
   }
 };
@@ -1127,13 +1125,6 @@ TopologyMetadata.prototype.read = function(input) {
       }
       break;
       case 2:
-      if (ftype == Thrift.Type.STRING) {
-        this.hash = input.readString();
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      case 3:
       if (ftype == Thrift.Type.MAP) {
         var _size56 = 0;
         var _rtmp360;
@@ -1158,6 +1149,13 @@ TopologyMetadata.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.frameworkID = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -1174,13 +1172,8 @@ TopologyMetadata.prototype.write = function(output) {
     output.writeI32(this.version);
     output.writeFieldEnd();
   }
-  if (this.hash !== null && this.hash !== undefined) {
-    output.writeFieldBegin('hash', Thrift.Type.STRING, 2);
-    output.writeString(this.hash);
-    output.writeFieldEnd();
-  }
   if (this.computations !== null && this.computations !== undefined) {
-    output.writeFieldBegin('computations', Thrift.Type.MAP, 3);
+    output.writeFieldBegin('computations', Thrift.Type.MAP, 2);
     output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.STRUCT, Thrift.objectLength(this.computations));
     for (var kiter64 in this.computations)
     {
@@ -1192,6 +1185,11 @@ TopologyMetadata.prototype.write = function(output) {
       }
     }
     output.writeMapEnd();
+    output.writeFieldEnd();
+  }
+  if (this.frameworkID !== null && this.frameworkID !== undefined) {
+    output.writeFieldBegin('frameworkID', Thrift.Type.STRING, 3);
+    output.writeString(this.frameworkID);
     output.writeFieldEnd();
   }
   output.writeFieldStop();

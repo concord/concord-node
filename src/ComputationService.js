@@ -111,16 +111,16 @@ ComputationService_init_result.prototype.write = function(output) {
   return;
 };
 
-ComputationService_boltProcessRecord_args = function(args) {
-  this.record = null;
+ComputationService_boltProcessRecords_args = function(args) {
+  this.records = null;
   if (args) {
-    if (args.record !== undefined) {
-      this.record = args.record;
+    if (args.records !== undefined) {
+      this.records = args.records;
     }
   }
 };
-ComputationService_boltProcessRecord_args.prototype = {};
-ComputationService_boltProcessRecord_args.prototype.read = function(input) {
+ComputationService_boltProcessRecords_args.prototype = {};
+ComputationService_boltProcessRecords_args.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -134,9 +134,22 @@ ComputationService_boltProcessRecord_args.prototype.read = function(input) {
     switch (fid)
     {
       case 1:
-      if (ftype == Thrift.Type.STRUCT) {
-        this.record = new ttypes.Record();
-        this.record.read(input);
+      if (ftype == Thrift.Type.LIST) {
+        var _size108 = 0;
+        var _rtmp3112;
+        this.records = [];
+        var _etype111 = 0;
+        _rtmp3112 = input.readListBegin();
+        _etype111 = _rtmp3112.etype;
+        _size108 = _rtmp3112.size;
+        for (var _i113 = 0; _i113 < _size108; ++_i113)
+        {
+          var elem114 = null;
+          elem114 = new ttypes.Record();
+          elem114.read(input);
+          this.records.push(elem114);
+        }
+        input.readListEnd();
       } else {
         input.skip(ftype);
       }
@@ -153,11 +166,20 @@ ComputationService_boltProcessRecord_args.prototype.read = function(input) {
   return;
 };
 
-ComputationService_boltProcessRecord_args.prototype.write = function(output) {
-  output.writeStructBegin('ComputationService_boltProcessRecord_args');
-  if (this.record !== null && this.record !== undefined) {
-    output.writeFieldBegin('record', Thrift.Type.STRUCT, 1);
-    this.record.write(output);
+ComputationService_boltProcessRecords_args.prototype.write = function(output) {
+  output.writeStructBegin('ComputationService_boltProcessRecords_args');
+  if (this.records !== null && this.records !== undefined) {
+    output.writeFieldBegin('records', Thrift.Type.LIST, 1);
+    output.writeListBegin(Thrift.Type.STRUCT, this.records.length);
+    for (var iter115 in this.records)
+    {
+      if (this.records.hasOwnProperty(iter115))
+      {
+        iter115 = this.records[iter115];
+        iter115.write(output);
+      }
+    }
+    output.writeListEnd();
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -165,7 +187,7 @@ ComputationService_boltProcessRecord_args.prototype.write = function(output) {
   return;
 };
 
-ComputationService_boltProcessRecord_result = function(args) {
+ComputationService_boltProcessRecords_result = function(args) {
   this.success = null;
   this.e = null;
   if (args instanceof ttypes.BoltError) {
@@ -181,8 +203,8 @@ ComputationService_boltProcessRecord_result = function(args) {
     }
   }
 };
-ComputationService_boltProcessRecord_result.prototype = {};
-ComputationService_boltProcessRecord_result.prototype.read = function(input) {
+ComputationService_boltProcessRecords_result.prototype = {};
+ComputationService_boltProcessRecords_result.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -196,9 +218,22 @@ ComputationService_boltProcessRecord_result.prototype.read = function(input) {
     switch (fid)
     {
       case 0:
-      if (ftype == Thrift.Type.STRUCT) {
-        this.success = new ttypes.ComputationTx();
-        this.success.read(input);
+      if (ftype == Thrift.Type.LIST) {
+        var _size116 = 0;
+        var _rtmp3120;
+        this.success = [];
+        var _etype119 = 0;
+        _rtmp3120 = input.readListBegin();
+        _etype119 = _rtmp3120.etype;
+        _size116 = _rtmp3120.size;
+        for (var _i121 = 0; _i121 < _size116; ++_i121)
+        {
+          var elem122 = null;
+          elem122 = new ttypes.ComputationTx();
+          elem122.read(input);
+          this.success.push(elem122);
+        }
+        input.readListEnd();
       } else {
         input.skip(ftype);
       }
@@ -220,11 +255,20 @@ ComputationService_boltProcessRecord_result.prototype.read = function(input) {
   return;
 };
 
-ComputationService_boltProcessRecord_result.prototype.write = function(output) {
-  output.writeStructBegin('ComputationService_boltProcessRecord_result');
+ComputationService_boltProcessRecords_result.prototype.write = function(output) {
+  output.writeStructBegin('ComputationService_boltProcessRecords_result');
   if (this.success !== null && this.success !== undefined) {
-    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
-    this.success.write(output);
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter123 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter123))
+      {
+        iter123 = this.success[iter123];
+        iter123.write(output);
+      }
+    }
+    output.writeListEnd();
     output.writeFieldEnd();
   }
   if (this.e !== null && this.e !== undefined) {
@@ -533,7 +577,7 @@ ComputationServiceClient.prototype.recv_init = function(input,mtype,rseqid) {
   }
   return callback('init failed: unknown result');
 };
-ComputationServiceClient.prototype.boltProcessRecord = function(record, callback) {
+ComputationServiceClient.prototype.boltProcessRecords = function(records, callback) {
   this._seqid = this.new_seqid();
   if (callback === undefined) {
     var _defer = Q.defer();
@@ -544,25 +588,25 @@ ComputationServiceClient.prototype.boltProcessRecord = function(record, callback
         _defer.resolve(result);
       }
     };
-    this.send_boltProcessRecord(record);
+    this.send_boltProcessRecords(records);
     return _defer.promise;
   } else {
     this._reqs[this.seqid()] = callback;
-    this.send_boltProcessRecord(record);
+    this.send_boltProcessRecords(records);
   }
 };
 
-ComputationServiceClient.prototype.send_boltProcessRecord = function(record) {
+ComputationServiceClient.prototype.send_boltProcessRecords = function(records) {
   var output = new this.pClass(this.output);
-  output.writeMessageBegin('boltProcessRecord', Thrift.MessageType.CALL, this.seqid());
-  var args = new ComputationService_boltProcessRecord_args();
-  args.record = record;
+  output.writeMessageBegin('boltProcessRecords', Thrift.MessageType.CALL, this.seqid());
+  var args = new ComputationService_boltProcessRecords_args();
+  args.records = records;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
 };
 
-ComputationServiceClient.prototype.recv_boltProcessRecord = function(input,mtype,rseqid) {
+ComputationServiceClient.prototype.recv_boltProcessRecords = function(input,mtype,rseqid) {
   var callback = this._reqs[rseqid] || function() {};
   delete this._reqs[rseqid];
   if (mtype == Thrift.MessageType.EXCEPTION) {
@@ -571,7 +615,7 @@ ComputationServiceClient.prototype.recv_boltProcessRecord = function(input,mtype
     input.readMessageEnd();
     return callback(x);
   }
-  var result = new ComputationService_boltProcessRecord_result();
+  var result = new ComputationService_boltProcessRecords_result();
   result.read(input);
   input.readMessageEnd();
 
@@ -581,7 +625,7 @@ ComputationServiceClient.prototype.recv_boltProcessRecord = function(input,mtype
   if (null !== result.success) {
     return callback(null, result.success);
   }
-  return callback('boltProcessRecord failed: unknown result');
+  return callback('boltProcessRecords failed: unknown result');
 };
 ComputationServiceClient.prototype.boltProcessTimer = function(key, time, callback) {
   this._seqid = this.new_seqid();
@@ -731,29 +775,29 @@ ComputationServiceProcessor.prototype.process_init = function(seqid, input, outp
   }
 }
 
-ComputationServiceProcessor.prototype.process_boltProcessRecord = function(seqid, input, output) {
-  var args = new ComputationService_boltProcessRecord_args();
+ComputationServiceProcessor.prototype.process_boltProcessRecords = function(seqid, input, output) {
+  var args = new ComputationService_boltProcessRecords_args();
   args.read(input);
   input.readMessageEnd();
-  if (this._handler.boltProcessRecord.length === 1) {
-    Q.fcall(this._handler.boltProcessRecord, args.record)
+  if (this._handler.boltProcessRecords.length === 1) {
+    Q.fcall(this._handler.boltProcessRecords, args.records)
       .then(function(result) {
-        var result = new ComputationService_boltProcessRecord_result({success: result});
-        output.writeMessageBegin("boltProcessRecord", Thrift.MessageType.REPLY, seqid);
+        var result = new ComputationService_boltProcessRecords_result({success: result});
+        output.writeMessageBegin("boltProcessRecords", Thrift.MessageType.REPLY, seqid);
         result.write(output);
         output.writeMessageEnd();
         output.flush();
       }, function (err) {
-        var result = new ComputationService_boltProcessRecord_result(err);
-        output.writeMessageBegin("boltProcessRecord", Thrift.MessageType.REPLY, seqid);
+        var result = new ComputationService_boltProcessRecords_result(err);
+        output.writeMessageBegin("boltProcessRecords", Thrift.MessageType.REPLY, seqid);
         result.write(output);
         output.writeMessageEnd();
         output.flush();
       });
   } else {
-    this._handler.boltProcessRecord(args.record,  function (err, result) {
-      var result = new ComputationService_boltProcessRecord_result((err != null ? err : {success: result}));
-      output.writeMessageBegin("boltProcessRecord", Thrift.MessageType.REPLY, seqid);
+    this._handler.boltProcessRecords(args.records,  function (err, result) {
+      var result = new ComputationService_boltProcessRecords_result((err != null ? err : {success: result}));
+      output.writeMessageBegin("boltProcessRecords", Thrift.MessageType.REPLY, seqid);
       result.write(output);
       output.writeMessageEnd();
       output.flush();

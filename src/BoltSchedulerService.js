@@ -302,12 +302,16 @@ BoltSchedulerService_registerComputation_args.prototype.write = function(output)
 };
 
 BoltSchedulerService_registerComputation_result = function(args) {
+  this.success = null;
   this.e = null;
   if (args instanceof ttypes.BoltError) {
     this.e = args;
     return;
   }
   if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
     if (args.e !== undefined) {
       this.e = args.e;
     }
@@ -327,6 +331,14 @@ BoltSchedulerService_registerComputation_result.prototype.read = function(input)
     }
     switch (fid)
     {
+      case 0:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.success = new ttypes.TopologyMetadata();
+        this.success.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
       case 1:
       if (ftype == Thrift.Type.STRUCT) {
         this.e = new ttypes.BoltError();
@@ -335,9 +347,6 @@ BoltSchedulerService_registerComputation_result.prototype.read = function(input)
         input.skip(ftype);
       }
       break;
-      case 0:
-        input.skip(ftype);
-        break;
       default:
         input.skip(ftype);
     }
@@ -349,6 +358,11 @@ BoltSchedulerService_registerComputation_result.prototype.read = function(input)
 
 BoltSchedulerService_registerComputation_result.prototype.write = function(output) {
   output.writeStructBegin('BoltSchedulerService_registerComputation_result');
+  if (this.success !== null && this.success !== undefined) {
+    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
+    this.success.write(output);
+    output.writeFieldEnd();
+  }
   if (this.e !== null && this.e !== undefined) {
     output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
     this.e.write(output);
@@ -745,7 +759,10 @@ BoltSchedulerServiceClient.prototype.recv_registerComputation = function(input,m
   if (null !== result.e) {
     return callback(result.e);
   }
-  callback(null)
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('registerComputation failed: unknown result');
 };
 BoltSchedulerServiceClient.prototype.scaleComputation = function(computationName, instances, callback) {
   this._seqid = this.new_seqid();

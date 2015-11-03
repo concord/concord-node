@@ -1,303 +1,226 @@
 'use strict';
 
-var EE = require('events').EventEmitter;
-var util = require('util');
 var thrift = require('thrift');
-var FramedTransport = require('thrift').TFramedTransport;
-var BinaryProtocol = require('thrift').TBinaryProtocol;
-var Types = require('./src/bolt_types');
+
 var BoltProxyService = require('./src/BoltProxyService');
 var ComputationService = require('./src/ComputationService');
-
+var Types = require('./src/bolt_types');
 var ComputationMetadata = Types.ComputationMetadata;
-var StreamMetadata = Types.StreamMetadata;
-//
-// Transation returned on each request
-//
-var Tx = Types.ComputationTx;
-var Record = Types.Record;
-var Endpoint = Types.Endpoint;
-
-//TODO: Refactor into separate files
-exports.Computation = Computation;
-
-//
-// Inherit from an event emitter
-//
-util.inherits(Computation, EE);
+var Promise = require('promise');
+var after = require('after');
 
 function Computation(options) {
-  EE.call(this);
-
-  //
-  // Validate that a name is given
-  //
-  this.name = options.name;
-  if (!this.name) throw new Error('Name of computation must be specified');
-  //
-  // Computation init function and process functions which are required.
-  // If these arent defined, errors will be thrown if they attempt to be used
-  // when starting the computation
-  //
-  if (typeof options.init === 'function') this._init = options.init;
-  if (typeof options.processRecord === 'function')
-    this._processRecord = options.processRecord;
-
-  if (typeof options.processTimer === 'function') this.processTimer = options.processTimer;
-
-  //
-  // TODO: Validate these arrays for the case that they are objects as they
-  // require both a name and grouping property
-  //
-  this.publish = options.publish || [];
-  this.subscribe = options.subscribe || [];
-
-  if (!this.publish.length && !this.subscribe.length) {
-    throw new Error('You must subscribe and/or publish to certain named messages');
-  }
-
-  //
-  // Derive the metadata object that we use to communicate with concord from
-  // the subscribe and publish options
-  //
-  this.metadata = this.deriveMeta();
-}
-
-//
-// THESE FUNCTIONS CANNOT CHANGE! They are called by the thrift craziness.
-// These functions are used to proxy the calls to the user defined functions
-// when they define their computation
-//
-// BEGIN BLOCK!
-//
-
-//
-// Call the init function. This allows the user to set any timers
-// or produce any records even before they receive anything. More useful for
-// setting timers
-//
-Computation.prototype.init = function (callback) {
-  var tx = new Transaction();
-  var ctx = new Context(tx);
-
-  this._init.call(ctx, function (err) {
-    return err
-      ? callback(err)
-      : callback(null, tx);
-  });
-};
-
-Computation.prototype.boltProcessRecord = function (record, callback) {
   var self = this;
-  var tx = new Transaction();
-  var ctx = new Context(tx);
+  self.handler = {};
 
-  //
-  // For the functions that
-  //
-  this._processRecord.call(ctx, record, function (err) {
-    if (err) {
-      return callback(err);
-    }
-
-    //
-    // We ALWAYS return the transaction here to be sent over the thrift
-    // protocol
-    //
-    callback(null , tx);
-  });
-};
-
-Computation.prototype.boltProcessTimer = function (key, time, callback) {
-  var tx = new Transaction();
-  var ctx = new Context(tx);
-
-  this._processTimer.call(ctx, key, time, function (err) {
-    if (err) { return callback(err); }
-    callback(null, tx);
-  });
-};
-
-//
-// This just always returns the derived metadata
-//
-Computation.prototype.boltMetadata = function (callback) {
-  return void callback(null, this.metadata);
-};
-
-//
-// END BLOCK!
-//
-
-//
-// Default the user defined versions of these functions
-//
-['_init', '_processRecord', '_processTimer'].forEach(function (action) {
-  Computation.prototype[action] = function () {
-    throw new Error(action.slice(1) + ' must be implemented by passing it into the constructor');
-  };
-});
-
-//
-// This derives the metadata object that we communicate to concord
-//
-Computation.prototype.deriveMeta = function () {
-  return new ComputationMetadata({
-    name: this.name,
-    istreams: this.subscribe.map(this._mapMetadata, this),
-    ostreams: this.publish.map(this._mapMetadata, this),
-  });
-};
-
-//
-// Return proper stream meta data object given strings or objects
-//
-Computation.prototype._mapMetadata = function (s) {
-  return typeof s === 'string'
-    ? new StreamMetadata({ name: s, grouping: 'SHUFFLE' })
-    : new StreamMetadata({ name: s.name, grouping: groupMap(s.grouping) || 'SHUFFLE' });
-};
-
-//
-// Connect to the client proxy
-//
-Computation.prototype.connect = function (host, port, callback) {
-  var self = this;
-  //
-  // Set the values and initialize the proxy
-  //
-  this.host = host;
-  this.port = port;
-  this.proxy = this.createProxy(host, port);
-
-  this.metadata.proxyEndpoint = new Endpoint({ ip: host, port: port });
-
-  //
-  // Alias functions over so they are properly called by the thrift machinery
-  //
-  this.getState = this.proxy.getState;
-  this.setState = this.proxy.setState;
-
-  //
-  // Check if there is a result we care about
-  //
-  this.proxy.registerWithScheduler(this.metadata, function (err) {
-    if (err) {
-      return callback
-        ? callback(err)
-        : self.emit('error', err);
-    }
-
-    self.emit('register', self.metadata);
-
-    if (callback) callback();
-  });
-
-};
-
-//
-// Create a bolt service proxy through instantiating a proper thrift connection
-//
-Computation.prototype.createProxy = function (host, port) {
-  this.connection = thrift.createConnection(host, port, {
-    transport: FramedTransport(),
-    protocol: BinaryProtocol()
-  });
-
-  this.connection.on('error', this.emit.bind(this, 'error'));
-  this.connection.on('connect', this.emit.bind(this, 'connection'));
-  //
-  // Return a BoltProxyService
-  //
-  return thrift.createClient(BoltProxyService, this.connection);
-};
-
-//
-// A wrapper around the thrift ComputationTx to initialize values
-//
-function Transaction() {
-  return new Tx({
-    records: [],
-    timers: {}
-  });
-}
-//
-// A context that wraps the transaction and provides methods to modify each
-// transaction sent to concord
-//
-function Context(tx) {
-  this.__tx = tx;
-}
-
-//
-// Accepts the stream name, the key and the value
-//
-Context.prototype.produceRecord = function (stream, key, value) {
-  this.__tx.records.push(new Record({
-    key: key,
-    value: value,
-    userStream: stream
-  }));
-};
-
-Context.prototype.setTimer = function (key, time) {
-  this.__tx.timers[key] = time;
-};
-
-//
-// Handle mapping a grouping name to the proper TYPE, otherwise return an error
-//
-function groupMap(grouping) {
-  return Types.streamGrouping[snakeCase(grouping).toUpperCase()]
-}
-
-//
-// Naive snakeCase implementation
-//
-function snakeCase(text) {
-  return text.replace(/[a-z][A-Z]/g, function (ch) {
-    return ch[0] + '_' + ch[1].toLowerCase();
-  });
-};
-
-//
-// Parse environment variables and create a thrift service based on the
-// computation
-//
-exports.run = function run(computation) {
-  var server = thift.createServer(ComputationService, computation);
-
-  //
-  // Send a start event when we are fully connected to everything
-  //
-  var finish = after(2, function () {
-    server.emit('start');
-  });
-
-  //
-  // Port to listen on
-  //
-  var port = process.env[Types.kConcordEnvKeyClientListenAddr].split(':')[1];
-  //
-  // Grab address to start proxy connection
-  //
   var proxyParams = process.env[Types.kConcordEnvKeyClientProxyAddr].split(':');
+  proxyParams[1] = parseInt(proxyParams[1]);
 
-  //
-  // Error if we do not have environment variables set
-  //
-  if (!port || !proxyParams.length) {
-    setImmediate(server.emit.bind(emitter), 'error', new Error('Environment variables not found'));
-    return server;
+  options.proxyHost = proxyParams[0];
+  options.proxyPort = proxyParams[1];
+ 
+  var fields = [
+    ['name', 'string', true],
+    ['init', 'function'],
+    ['processRecord', 'function'],
+    ['processTimer', 'function'],
+    ['publish', 'object'],
+    ['subscribe', 'object'],
+    ['proxyHost', 'string', true],
+    ['proxyPort', 'number', true]
+  ];
+
+  var processField = function (name, type, required) {
+    if (options[name] !== undefined) {
+      if (typeof options[name] === type) {
+        self.handler[name] = options[name];
+      } else {
+        throw new Error('Field ' + name + ' must be of type ' + type);
+      }
+    } else if (required) {
+      throw new Error('Field ' + name + ' is required');
+    }
+  };
+
+  fields.forEach(function (args) { processField.apply(self, args); });
+
+  self.metadata = this.deriveMetadata();
+  self.proxy = {connected: false};
+}
+
+Computation.prototype.getProxy = function () {
+  if (!this.proxy.connected) {
+    var self = this;
+    this.proxy.client = new Promise(function (resolve, reject) {
+      var transport = new thrift.TFramedTransport();
+      var protocol = new thrift.TBinaryProtocol(transport);
+
+      var conn = thrift.createConnection(
+        this.handler.proxyHost,
+        this.handler.proxyPort,
+        {transport: transport, protocol: protocol});
+
+      console.error('lol');
+      
+      var client = thrift.createClient(BoltProxyService, conn);
+
+      console.error('made conn', conn);
+
+      conn.on('connect', function () {
+        console.error('Creating client...');
+        self.proxy.connected = true;
+        resolve(client);
+      });
+      //conn.on('error', reject.bind(self));
+      conn.on('error', function () {
+        console.error('Error creating client...');
+      });
+    });
   }
-  //
-  // So we can apply an array as the arguments, we use .apply
-  //
-  computation.connect.apply(computation, proxyParams);
-  computation.once('register', finish);
-  server.once('connect', finish);
 
-  server.listen(port);
+  console.error('returning get me outta here');
+  return this.proxy.client;
+};
+
+Computation.prototype.createComputationContext = function () {
+  var self = this;
+  var tx = new Types.ComputationTx();
+
+  var produceRecord = function (stream, key, value) {
+    tx.records.push(new Types.Record({
+      key: key,
+      data: data,
+      userStream: stream
+    }));
+  };
+
+  var setTimer = function (name, time) {
+    tx.timers[name] = time;
+  };
+
+  var getState = function (key) {
+    return self.getProxy().then(function (proxy) {
+      return new Promise(function (resolve, reject) {
+        proxy.getState(key, function (err, value) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(value);
+          }
+        });
+      });
+    });
+  };
+
+  var setState = function (key, value) {
+    return self.getProxy().then(function (proxy) {
+      return new Promise(function (resolve, reject) {
+        proxy.setState(key, value, function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    });
+  };
+
+  var ctx = {
+    produceRecord: produceRecord,
+    setTimer: setTimer,
+    getState: getState,
+    setState: setState
+  };
+
+  return [tx, ctx];
+};
+
+Computation.prototype.deriveMetadata = function() {
+  var metadata = new ComputationMetadata();
+
+  metadata.name     = this.handler.name;
+  metadata.ostreams = this.handler.publish || [];
+  this.handler.subscribe = this.handler.subscribe || [];
+  metadata.istreams = this.handler.subscribe.map(function (stream) {
+    return new Types.StreamMetadata(stream);
+  });
+
+  if (!metadata.ostreams.length && !metadata.istreams.length) {
+    throw new Error("Must list input or output streams");
+  }
+
+  metadata.proxyEndpoint = new Types.Endpoint({
+    host: this.handler.proxyHost,
+    port: this.handler.proxyPort
+  });
+
+  return metadata;
+};
+
+Computation.prototype.init = function (result) {
+  var txInfo = this.createComputationContext();
+  var tx     = txInfo[0];
+  var ctx    = txInfo[1];
+  try {
+    this.handler.init(ctx);
+    result(null, tx);
+  } catch (e) {
+    result(e.toString());
+  }
+};
+
+Computation.prototype.metadata = function (result) {
+  result(null, this.metadata);
+};
+
+Computation.prototype.boltProcessRecords = function (result, records) {
+  var txs = [];
+  records.map(function (record) {
+    var txInfo = this.createComputationContext();
+    var tx     = txInfo[0];
+    var ctx    = txInfo[1];
+
+    this.handler.produceRecord(ctx, record);
+
+    txs.push(tx);
+  });
+
+  result(null, txs);
+};
+
+Computation.prototype.boltProcessTimer = function (result, key, time) {
+  var txInfo = this.createComputationContext();
+  var tx     = txInfo[0];
+  var ctx    = txInfo[1];
+
+  this.handler.processTimer(ctx, key, time);
+
+  result(null, tx);
+};
+
+exports.Computation = Computation;
+exports.run = function (computation) {
+  var listenPort = process.env[Types.kConcordEnvKeyClientListenAddr].split(':')[1];
+
+  var server = thrift.createServer(ComputationService, computation, {
+    transport: thrift.TFramedTransport,
+    protocol: thrift.TBinaryProtocol
+  });
+
+  server.once('listening', function () {
+    console.error('Server listening, registering with scheduler');
+    computation.getProxy().then(function (proxy) {
+      proxy.registerWithScheduler(computation.metadata, function (err) {
+        if (err) {
+          console.error('ERROR: Failed to register:', err);
+        }
+      });
+    });
+  });
+
+  server.listen(listenPort);
 
   return server;
 };
+

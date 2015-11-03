@@ -14,16 +14,16 @@ var MutableEphemeralStateServiceProcessor = MutableEphemeralStateService.Process
 var ttypes = require('./bolt_types');
 //HELPER FUNCTIONS AND STRUCTURES
 
-BoltProxyService_registerRichStream_args = function(args) {
-  this.r = null;
+BoltProxyService_updateTopology_args = function(args) {
+  this.topology = null;
   if (args) {
-    if (args.r !== undefined) {
-      this.r = args.r;
+    if (args.topology !== undefined) {
+      this.topology = args.topology;
     }
   }
 };
-BoltProxyService_registerRichStream_args.prototype = {};
-BoltProxyService_registerRichStream_args.prototype.read = function(input) {
+BoltProxyService_updateTopology_args.prototype = {};
+BoltProxyService_updateTopology_args.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -38,8 +38,8 @@ BoltProxyService_registerRichStream_args.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.STRUCT) {
-        this.r = new ttypes.RichStream();
-        this.r.read(input);
+        this.topology = new ttypes.TopologyMetadata();
+        this.topology.read(input);
       } else {
         input.skip(ftype);
       }
@@ -56,11 +56,11 @@ BoltProxyService_registerRichStream_args.prototype.read = function(input) {
   return;
 };
 
-BoltProxyService_registerRichStream_args.prototype.write = function(output) {
-  output.writeStructBegin('BoltProxyService_registerRichStream_args');
-  if (this.r !== null && this.r !== undefined) {
-    output.writeFieldBegin('r', Thrift.Type.STRUCT, 1);
-    this.r.write(output);
+BoltProxyService_updateTopology_args.prototype.write = function(output) {
+  output.writeStructBegin('BoltProxyService_updateTopology_args');
+  if (this.topology !== null && this.topology !== undefined) {
+    output.writeFieldBegin('topology', Thrift.Type.STRUCT, 1);
+    this.topology.write(output);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -68,24 +68,20 @@ BoltProxyService_registerRichStream_args.prototype.write = function(output) {
   return;
 };
 
-BoltProxyService_registerRichStream_result = function(args) {
-  this.success = null;
+BoltProxyService_updateTopology_result = function(args) {
   this.e = null;
   if (args instanceof ttypes.BoltError) {
     this.e = args;
     return;
   }
   if (args) {
-    if (args.success !== undefined) {
-      this.success = args.success;
-    }
     if (args.e !== undefined) {
       this.e = args.e;
     }
   }
 };
-BoltProxyService_registerRichStream_result.prototype = {};
-BoltProxyService_registerRichStream_result.prototype.read = function(input) {
+BoltProxyService_updateTopology_result.prototype = {};
+BoltProxyService_updateTopology_result.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -98,73 +94,10 @@ BoltProxyService_registerRichStream_result.prototype.read = function(input) {
     }
     switch (fid)
     {
-      case 0:
-      if (ftype == Thrift.Type.BOOL) {
-        this.success = input.readBool();
-      } else {
-        input.skip(ftype);
-      }
-      break;
       case 1:
       if (ftype == Thrift.Type.STRUCT) {
         this.e = new ttypes.BoltError();
         this.e.read(input);
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      default:
-        input.skip(ftype);
-    }
-    input.readFieldEnd();
-  }
-  input.readStructEnd();
-  return;
-};
-
-BoltProxyService_registerRichStream_result.prototype.write = function(output) {
-  output.writeStructBegin('BoltProxyService_registerRichStream_result');
-  if (this.success !== null && this.success !== undefined) {
-    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
-    output.writeBool(this.success);
-    output.writeFieldEnd();
-  }
-  if (this.e !== null && this.e !== undefined) {
-    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
-    this.e.write(output);
-    output.writeFieldEnd();
-  }
-  output.writeFieldStop();
-  output.writeStructEnd();
-  return;
-};
-
-BoltProxyService_deregisterRichStream_args = function(args) {
-  this.r = null;
-  if (args) {
-    if (args.r !== undefined) {
-      this.r = args.r;
-    }
-  }
-};
-BoltProxyService_deregisterRichStream_args.prototype = {};
-BoltProxyService_deregisterRichStream_args.prototype.read = function(input) {
-  input.readStructBegin();
-  while (true)
-  {
-    var ret = input.readFieldBegin();
-    var fname = ret.fname;
-    var ftype = ret.ftype;
-    var fid = ret.fid;
-    if (ftype == Thrift.Type.STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-      if (ftype == Thrift.Type.STRUCT) {
-        this.r = new ttypes.RichStream();
-        this.r.read(input);
       } else {
         input.skip(ftype);
       }
@@ -181,79 +114,8 @@ BoltProxyService_deregisterRichStream_args.prototype.read = function(input) {
   return;
 };
 
-BoltProxyService_deregisterRichStream_args.prototype.write = function(output) {
-  output.writeStructBegin('BoltProxyService_deregisterRichStream_args');
-  if (this.r !== null && this.r !== undefined) {
-    output.writeFieldBegin('r', Thrift.Type.STRUCT, 1);
-    this.r.write(output);
-    output.writeFieldEnd();
-  }
-  output.writeFieldStop();
-  output.writeStructEnd();
-  return;
-};
-
-BoltProxyService_deregisterRichStream_result = function(args) {
-  this.success = null;
-  this.e = null;
-  if (args instanceof ttypes.BoltError) {
-    this.e = args;
-    return;
-  }
-  if (args) {
-    if (args.success !== undefined) {
-      this.success = args.success;
-    }
-    if (args.e !== undefined) {
-      this.e = args.e;
-    }
-  }
-};
-BoltProxyService_deregisterRichStream_result.prototype = {};
-BoltProxyService_deregisterRichStream_result.prototype.read = function(input) {
-  input.readStructBegin();
-  while (true)
-  {
-    var ret = input.readFieldBegin();
-    var fname = ret.fname;
-    var ftype = ret.ftype;
-    var fid = ret.fid;
-    if (ftype == Thrift.Type.STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-      if (ftype == Thrift.Type.BOOL) {
-        this.success = input.readBool();
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      case 1:
-      if (ftype == Thrift.Type.STRUCT) {
-        this.e = new ttypes.BoltError();
-        this.e.read(input);
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      default:
-        input.skip(ftype);
-    }
-    input.readFieldEnd();
-  }
-  input.readStructEnd();
-  return;
-};
-
-BoltProxyService_deregisterRichStream_result.prototype.write = function(output) {
-  output.writeStructBegin('BoltProxyService_deregisterRichStream_result');
-  if (this.success !== null && this.success !== undefined) {
-    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
-    output.writeBool(this.success);
-    output.writeFieldEnd();
-  }
+BoltProxyService_updateTopology_result.prototype.write = function(output) {
+  output.writeStructBegin('BoltProxyService_updateTopology_result');
   if (this.e !== null && this.e !== undefined) {
     output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
     this.e.write(output);
@@ -288,19 +150,19 @@ BoltProxyService_dispatchRecords_args.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size118 = 0;
-        var _rtmp3122;
+        var _size124 = 0;
+        var _rtmp3128;
         this.records = [];
-        var _etype121 = 0;
-        _rtmp3122 = input.readListBegin();
-        _etype121 = _rtmp3122.etype;
-        _size118 = _rtmp3122.size;
-        for (var _i123 = 0; _i123 < _size118; ++_i123)
+        var _etype127 = 0;
+        _rtmp3128 = input.readListBegin();
+        _etype127 = _rtmp3128.etype;
+        _size124 = _rtmp3128.size;
+        for (var _i129 = 0; _i129 < _size124; ++_i129)
         {
-          var elem124 = null;
-          elem124 = new ttypes.Record();
-          elem124.read(input);
-          this.records.push(elem124);
+          var elem130 = null;
+          elem130 = new ttypes.Record();
+          elem130.read(input);
+          this.records.push(elem130);
         }
         input.readListEnd();
       } else {
@@ -324,12 +186,12 @@ BoltProxyService_dispatchRecords_args.prototype.write = function(output) {
   if (this.records !== null && this.records !== undefined) {
     output.writeFieldBegin('records', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.records.length);
-    for (var iter125 in this.records)
+    for (var iter131 in this.records)
     {
-      if (this.records.hasOwnProperty(iter125))
+      if (this.records.hasOwnProperty(iter131))
       {
-        iter125 = this.records[iter125];
-        iter125.write(output);
+        iter131 = this.records[iter131];
+        iter131.write(output);
       }
     }
     output.writeListEnd();
@@ -556,6 +418,7 @@ BoltProxyService_registerWithScheduler_args.prototype.write = function(output) {
   output.writeStructBegin('BoltProxyService_registerWithScheduler_args');
   if (this.meta !== null && this.meta !== undefined) {
     output.writeFieldBegin('meta', Thrift.Type.STRUCT, 1);
+    console.log('writing', output);
     this.meta.write(output);
     output.writeFieldEnd();
   }
@@ -601,7 +464,7 @@ BoltProxyServiceClient = exports.Client = function(output, pClass) {
 Thrift.inherits(BoltProxyServiceClient, MutableEphemeralStateServiceClient);
 BoltProxyServiceClient.prototype.seqid = function() { return this._seqid; }
 BoltProxyServiceClient.prototype.new_seqid = function() { return this._seqid += 1; }
-BoltProxyServiceClient.prototype.registerRichStream = function(r, callback) {
+BoltProxyServiceClient.prototype.updateTopology = function(topology, callback) {
   this._seqid = this.new_seqid();
   if (callback === undefined) {
     var _defer = Q.defer();
@@ -612,25 +475,25 @@ BoltProxyServiceClient.prototype.registerRichStream = function(r, callback) {
         _defer.resolve(result);
       }
     };
-    this.send_registerRichStream(r);
+    this.send_updateTopology(topology);
     return _defer.promise;
   } else {
     this._reqs[this.seqid()] = callback;
-    this.send_registerRichStream(r);
+    this.send_updateTopology(topology);
   }
 };
 
-BoltProxyServiceClient.prototype.send_registerRichStream = function(r) {
+BoltProxyServiceClient.prototype.send_updateTopology = function(topology) {
   var output = new this.pClass(this.output);
-  output.writeMessageBegin('registerRichStream', Thrift.MessageType.CALL, this.seqid());
-  var args = new BoltProxyService_registerRichStream_args();
-  args.r = r;
+  output.writeMessageBegin('updateTopology', Thrift.MessageType.CALL, this.seqid());
+  var args = new BoltProxyService_updateTopology_args();
+  args.topology = topology;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
 };
 
-BoltProxyServiceClient.prototype.recv_registerRichStream = function(input,mtype,rseqid) {
+BoltProxyServiceClient.prototype.recv_updateTopology = function(input,mtype,rseqid) {
   var callback = this._reqs[rseqid] || function() {};
   delete this._reqs[rseqid];
   if (mtype == Thrift.MessageType.EXCEPTION) {
@@ -639,67 +502,14 @@ BoltProxyServiceClient.prototype.recv_registerRichStream = function(input,mtype,
     input.readMessageEnd();
     return callback(x);
   }
-  var result = new BoltProxyService_registerRichStream_result();
+  var result = new BoltProxyService_updateTopology_result();
   result.read(input);
   input.readMessageEnd();
 
   if (null !== result.e) {
     return callback(result.e);
   }
-  if (null !== result.success) {
-    return callback(null, result.success);
-  }
-  return callback('registerRichStream failed: unknown result');
-};
-BoltProxyServiceClient.prototype.deregisterRichStream = function(r, callback) {
-  this._seqid = this.new_seqid();
-  if (callback === undefined) {
-    var _defer = Q.defer();
-    this._reqs[this.seqid()] = function(error, result) {
-      if (error) {
-        _defer.reject(error);
-      } else {
-        _defer.resolve(result);
-      }
-    };
-    this.send_deregisterRichStream(r);
-    return _defer.promise;
-  } else {
-    this._reqs[this.seqid()] = callback;
-    this.send_deregisterRichStream(r);
-  }
-};
-
-BoltProxyServiceClient.prototype.send_deregisterRichStream = function(r) {
-  var output = new this.pClass(this.output);
-  output.writeMessageBegin('deregisterRichStream', Thrift.MessageType.CALL, this.seqid());
-  var args = new BoltProxyService_deregisterRichStream_args();
-  args.r = r;
-  args.write(output);
-  output.writeMessageEnd();
-  return this.output.flush();
-};
-
-BoltProxyServiceClient.prototype.recv_deregisterRichStream = function(input,mtype,rseqid) {
-  var callback = this._reqs[rseqid] || function() {};
-  delete this._reqs[rseqid];
-  if (mtype == Thrift.MessageType.EXCEPTION) {
-    var x = new Thrift.TApplicationException();
-    x.read(input);
-    input.readMessageEnd();
-    return callback(x);
-  }
-  var result = new BoltProxyService_deregisterRichStream_result();
-  result.read(input);
-  input.readMessageEnd();
-
-  if (null !== result.e) {
-    return callback(result.e);
-  }
-  if (null !== result.success) {
-    return callback(null, result.success);
-  }
-  return callback('deregisterRichStream failed: unknown result');
+  callback(null)
 };
 BoltProxyServiceClient.prototype.dispatchRecords = function(records, callback) {
   this._seqid = this.new_seqid();
@@ -842,59 +652,29 @@ BoltProxyServiceProcessor.prototype.process = function(input, output) {
   }
 }
 
-BoltProxyServiceProcessor.prototype.process_registerRichStream = function(seqid, input, output) {
-  var args = new BoltProxyService_registerRichStream_args();
+BoltProxyServiceProcessor.prototype.process_updateTopology = function(seqid, input, output) {
+  var args = new BoltProxyService_updateTopology_args();
   args.read(input);
   input.readMessageEnd();
-  if (this._handler.registerRichStream.length === 1) {
-    Q.fcall(this._handler.registerRichStream, args.r)
+  if (this._handler.updateTopology.length === 1) {
+    Q.fcall(this._handler.updateTopology, args.topology)
       .then(function(result) {
-        var result = new BoltProxyService_registerRichStream_result({success: result});
-        output.writeMessageBegin("registerRichStream", Thrift.MessageType.REPLY, seqid);
+        var result = new BoltProxyService_updateTopology_result({success: result});
+        output.writeMessageBegin("updateTopology", Thrift.MessageType.REPLY, seqid);
         result.write(output);
         output.writeMessageEnd();
         output.flush();
       }, function (err) {
-        var result = new BoltProxyService_registerRichStream_result(err);
-        output.writeMessageBegin("registerRichStream", Thrift.MessageType.REPLY, seqid);
+        var result = new BoltProxyService_updateTopology_result(err);
+        output.writeMessageBegin("updateTopology", Thrift.MessageType.REPLY, seqid);
         result.write(output);
         output.writeMessageEnd();
         output.flush();
       });
   } else {
-    this._handler.registerRichStream(args.r,  function (err, result) {
-      var result = new BoltProxyService_registerRichStream_result((err != null ? err : {success: result}));
-      output.writeMessageBegin("registerRichStream", Thrift.MessageType.REPLY, seqid);
-      result.write(output);
-      output.writeMessageEnd();
-      output.flush();
-    });
-  }
-}
-
-BoltProxyServiceProcessor.prototype.process_deregisterRichStream = function(seqid, input, output) {
-  var args = new BoltProxyService_deregisterRichStream_args();
-  args.read(input);
-  input.readMessageEnd();
-  if (this._handler.deregisterRichStream.length === 1) {
-    Q.fcall(this._handler.deregisterRichStream, args.r)
-      .then(function(result) {
-        var result = new BoltProxyService_deregisterRichStream_result({success: result});
-        output.writeMessageBegin("deregisterRichStream", Thrift.MessageType.REPLY, seqid);
-        result.write(output);
-        output.writeMessageEnd();
-        output.flush();
-      }, function (err) {
-        var result = new BoltProxyService_deregisterRichStream_result(err);
-        output.writeMessageBegin("deregisterRichStream", Thrift.MessageType.REPLY, seqid);
-        result.write(output);
-        output.writeMessageEnd();
-        output.flush();
-      });
-  } else {
-    this._handler.deregisterRichStream(args.r,  function (err, result) {
-      var result = new BoltProxyService_deregisterRichStream_result((err != null ? err : {success: result}));
-      output.writeMessageBegin("deregisterRichStream", Thrift.MessageType.REPLY, seqid);
+    this._handler.updateTopology(args.topology,  function (err, result) {
+      var result = new BoltProxyService_updateTopology_result((err != null ? err : {success: result}));
+      output.writeMessageBegin("updateTopology", Thrift.MessageType.REPLY, seqid);
       result.write(output);
       output.writeMessageEnd();
       output.flush();

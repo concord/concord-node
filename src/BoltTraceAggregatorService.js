@@ -35,19 +35,19 @@ BoltTraceAggregatorService_submitSpans_args.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size126 = 0;
-        var _rtmp3130;
+        var _size132 = 0;
+        var _rtmp3136;
         this.span = [];
-        var _etype129 = 0;
-        _rtmp3130 = input.readListBegin();
-        _etype129 = _rtmp3130.etype;
-        _size126 = _rtmp3130.size;
-        for (var _i131 = 0; _i131 < _size126; ++_i131)
+        var _etype135 = 0;
+        _rtmp3136 = input.readListBegin();
+        _etype135 = _rtmp3136.etype;
+        _size132 = _rtmp3136.size;
+        for (var _i137 = 0; _i137 < _size132; ++_i137)
         {
-          var elem132 = null;
-          elem132 = new ttypes.Span();
-          elem132.read(input);
-          this.span.push(elem132);
+          var elem138 = null;
+          elem138 = new ttypes.Span();
+          elem138.read(input);
+          this.span.push(elem138);
         }
         input.readListEnd();
       } else {
@@ -71,12 +71,12 @@ BoltTraceAggregatorService_submitSpans_args.prototype.write = function(output) {
   if (this.span !== null && this.span !== undefined) {
     output.writeFieldBegin('span', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.span.length);
-    for (var iter133 in this.span)
+    for (var iter139 in this.span)
     {
-      if (this.span.hasOwnProperty(iter133))
+      if (this.span.hasOwnProperty(iter139))
       {
-        iter133 = this.span[iter133];
-        iter133.write(output);
+        iter139 = this.span[iter139];
+        iter139.write(output);
       }
     }
     output.writeListEnd();
@@ -230,19 +230,19 @@ BoltTraceAggregatorService_getTrace_result.prototype.read = function(input) {
     {
       case 0:
       if (ftype == Thrift.Type.LIST) {
-        var _size134 = 0;
-        var _rtmp3138;
+        var _size140 = 0;
+        var _rtmp3144;
         this.success = [];
-        var _etype137 = 0;
-        _rtmp3138 = input.readListBegin();
-        _etype137 = _rtmp3138.etype;
-        _size134 = _rtmp3138.size;
-        for (var _i139 = 0; _i139 < _size134; ++_i139)
+        var _etype143 = 0;
+        _rtmp3144 = input.readListBegin();
+        _etype143 = _rtmp3144.etype;
+        _size140 = _rtmp3144.size;
+        for (var _i145 = 0; _i145 < _size140; ++_i145)
         {
-          var elem140 = null;
-          elem140 = new ttypes.Span();
-          elem140.read(input);
-          this.success.push(elem140);
+          var elem146 = null;
+          elem146 = new ttypes.Span();
+          elem146.read(input);
+          this.success.push(elem146);
         }
         input.readListEnd();
       } else {
@@ -271,12 +271,12 @@ BoltTraceAggregatorService_getTrace_result.prototype.write = function(output) {
   if (this.success !== null && this.success !== undefined) {
     output.writeFieldBegin('success', Thrift.Type.LIST, 0);
     output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
-    for (var iter141 in this.success)
+    for (var iter147 in this.success)
     {
-      if (this.success.hasOwnProperty(iter141))
+      if (this.success.hasOwnProperty(iter147))
       {
-        iter141 = this.success[iter141];
-        iter141.write(output);
+        iter147 = this.success[iter147];
+        iter147.write(output);
       }
     }
     output.writeListEnd();
@@ -390,18 +390,18 @@ BoltTraceAggregatorService_getTraceIds_result.prototype.read = function(input) {
     {
       case 0:
       if (ftype == Thrift.Type.LIST) {
-        var _size142 = 0;
-        var _rtmp3146;
+        var _size148 = 0;
+        var _rtmp3152;
         this.success = [];
-        var _etype145 = 0;
-        _rtmp3146 = input.readListBegin();
-        _etype145 = _rtmp3146.etype;
-        _size142 = _rtmp3146.size;
-        for (var _i147 = 0; _i147 < _size142; ++_i147)
+        var _etype151 = 0;
+        _rtmp3152 = input.readListBegin();
+        _etype151 = _rtmp3152.etype;
+        _size148 = _rtmp3152.size;
+        for (var _i153 = 0; _i153 < _size148; ++_i153)
         {
-          var elem148 = null;
-          elem148 = input.readI64();
-          this.success.push(elem148);
+          var elem154 = null;
+          elem154 = input.readI64();
+          this.success.push(elem154);
         }
         input.readListEnd();
       } else {
@@ -430,12 +430,12 @@ BoltTraceAggregatorService_getTraceIds_result.prototype.write = function(output)
   if (this.success !== null && this.success !== undefined) {
     output.writeFieldBegin('success', Thrift.Type.LIST, 0);
     output.writeListBegin(Thrift.Type.I64, this.success.length);
-    for (var iter149 in this.success)
+    for (var iter155 in this.success)
     {
-      if (this.success.hasOwnProperty(iter149))
+      if (this.success.hasOwnProperty(iter155))
       {
-        iter149 = this.success[iter149];
-        output.writeI64(iter149);
+        iter155 = this.success[iter155];
+        output.writeI64(iter155);
       }
     }
     output.writeListEnd();
@@ -475,18 +475,18 @@ BoltTraceAggregatorService_consolidateTraceIds_args.prototype.read = function(in
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size150 = 0;
-        var _rtmp3154;
+        var _size156 = 0;
+        var _rtmp3160;
         this.traceIds = [];
-        var _etype153 = 0;
-        _rtmp3154 = input.readListBegin();
-        _etype153 = _rtmp3154.etype;
-        _size150 = _rtmp3154.size;
-        for (var _i155 = 0; _i155 < _size150; ++_i155)
+        var _etype159 = 0;
+        _rtmp3160 = input.readListBegin();
+        _etype159 = _rtmp3160.etype;
+        _size156 = _rtmp3160.size;
+        for (var _i161 = 0; _i161 < _size156; ++_i161)
         {
-          var elem156 = null;
-          elem156 = input.readI64();
-          this.traceIds.push(elem156);
+          var elem162 = null;
+          elem162 = input.readI64();
+          this.traceIds.push(elem162);
         }
         input.readListEnd();
       } else {
@@ -510,12 +510,12 @@ BoltTraceAggregatorService_consolidateTraceIds_args.prototype.write = function(o
   if (this.traceIds !== null && this.traceIds !== undefined) {
     output.writeFieldBegin('traceIds', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.I64, this.traceIds.length);
-    for (var iter157 in this.traceIds)
+    for (var iter163 in this.traceIds)
     {
-      if (this.traceIds.hasOwnProperty(iter157))
+      if (this.traceIds.hasOwnProperty(iter163))
       {
-        iter157 = this.traceIds[iter157];
-        output.writeI64(iter157);
+        iter163 = this.traceIds[iter163];
+        output.writeI64(iter163);
       }
     }
     output.writeListEnd();
